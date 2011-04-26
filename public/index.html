@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Twitter Happiness Gauge</title>
+  <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js'></script>
+  <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+  <style type="text/css" media="screen">
+  body { font-family: Arial; background: #000; color: #fff }
+  h1 { font-size: 42px; text-align:center   }
+  #tweets, #text { width:600px; margin:auto }
+  #tweets { margin-top:100px }
+  #text { font-size:16px; height:140px; overflow:hidden; line-height:20px }
+  #container { width:400px; margin:auto }
+  #state { position:absolute;left:10px;top:10px; color:red }
+  #message { position:absolute;right:10px;top:10px; color:red }
+  #message a { color: red }
+  </style>
+</head>
+<body>
+
+
+    <script type="text/javascript">
+      
+      google.load('visualization', '1', {packages: ['gauge']});
+    
+      var worldHappinessMeter  = new function() {
+      var gauge, gaugeData, settings;
+          
+      defaultSettings = {
+          drawGaugeInterval: 1,
+          drawMessageInterval: 30,
+          socketAddress: 'happy.kilo75.com',
+          socketPort: '8001',
+          gaugeOptions: {width: 400, height: 420, redFrom: 75, redTo: 100,yellowFrom:50, yellowTo: 90, minorTicks: 1,
+            majorTicks: [ 'sad', 'hmmm...', 'fine', 'good', 'yeah!']
+          }
+        };
+          
+        this.init = function () {
+         settings = defaultSettings;
+          if(!("WebSocket" in window)) {
+          alert("Your browser does not support WebSockets. Please use latest Chrome or Webkit");
+          return;
+        }
+        google.setOnLoadCallback(initGauge);
+          initSocket(); 
+        }
+        
+      function initSocket()
+      {
+          var messageCount = 0;
+          wsocket = new WebSocket("ws://"+settings.socketAddress+":"+settings.socketPort );
+          wsocket.onmessage = function(evt) { 
+                messageCount++;
+                data = eval("(" + evt.data + ")");
+                value =  data.score;
+                if ( (messageCount % settings.drawMessageInterval )  == 0  ) {
+                if ( data.text != undefined ) { 
+                  item = $('<p style="display:none">'+data.text+'</p>');$('#text').prepend(item);
+                  $(item).slideDown(500);
+                }
+
+                }
+                if ( (messageCount % settings.drawGaugeInterval)  == 0  ) {
+                drawGauge(value);
+                }
+        
+        };
+        wsocket.onclose = function() {
+          $('#state').html('disconnected trying to reconnect ');
+          initSocket();
+        };
+        
+        wsocket.onopen = function() {
+          $('#state').html('connected');
+        };  
+      }
+          
+      function initGauge() 
+      {
+        gaugeData = new google.visualization.DataTable();
+        gaugeData.addColumn('string', 'Label');
+        gaugeData.addColumn('number', 'Value');
+           
+        gaugeData.addRows(3);
+        gaugeData.setValue(0, 0, '');
+        gaugeData.setValue(0, 1, 0);
+        gauge = new google.visualization.Gauge(document.getElementById('meter'));
+        gauge.draw(gaugeData, settings.gaugeOptions);
+      }
+    
+      function drawGauge( firstGaugeValue ) {
+          gaugeData.setValue(0, 1, firstGaugeValue);
+          gauge.draw(gaugeData, settings.gaugeOptions);
+      }
+  
+     };
+  
+    $(document).ready(function(){
+      worldHappinessMeter.init();
+    });
+
+  </script>
+
+
+<div id="tweets">
+<h1>Twitter Happiness Gauge</h1>
+<div id="state">disconnected trying to reconnect</div>
+<div id="message">(HTML5) websockets + node.js / <a href="http://kilo75.com">kilo 75</a></div>
+<div id="container">
+<div id="meter"></div>
+</div>
+</div>
+<div id="text"><div>
+
+</body>
+</html>
