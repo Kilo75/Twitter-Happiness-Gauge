@@ -42,13 +42,11 @@
         }
     });
     
-    // adds some dynamics otherwise gauge stagnates over time
     if ( (pCount%100)==0 ) {
         happinessCount    =  parseInt( ( happinessCount / ( happinessCount + sadnessCount   ) ) *100);
         sadnessCount  =  parseInt( ( sadnessCount / ( happinessCount + sadnessCount   ) ) *100);
         pCount = 0;
     }
-    //return score [1..100]
     return parseInt( ( happinessCount / ( (happinessCount) + ( sadnessCount ) ) ) * 100);
     
   }
@@ -72,7 +70,6 @@
     response.setEncoding('utf8');
     response.addListener('data', function (chunk) {
         message += chunk;
-        // if carriage return.
         if ( chunk.charCodeAt(chunk.length-2) == 13   ) {
             message.split("\n").forEach(function(tweet) {
                 if (tweet.trim().length > 0) {
